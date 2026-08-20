@@ -12,8 +12,8 @@ contextBridge.exposeInMainWorld("stickyNote", {
   snooze: () => ipcRenderer.invoke("reminder:snooze"),
   setMuted: (value: boolean) => ipcRenderer.invoke("reminder:setMuted", value),
   getReminderState: () => ipcRenderer.invoke("reminder:getState"),
-  onReminderFired: (callback: () => void) => {
-    const listener = () => callback();
+  onReminderFired: (callback: (nagClipUrl: string | null) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, nagClipUrl: string | null) => callback(nagClipUrl);
     ipcRenderer.on("reminder:fired", listener);
     return () => ipcRenderer.removeListener("reminder:fired", listener);
   },

@@ -1,13 +1,19 @@
-import { app } from "electron";
+import { app, session } from "electron";
 import { loadReminderSettings } from "./persistence/settingsStore";
 import { loadTaskListState, saveTaskListState } from "./persistence/taskListStore";
 import { registerReminderIpc } from "./reminder/reminderIpc";
 import { applyDailyReset, toLocalDateString } from "./tasks/dailyReset";
 import { registerTaskListIpc } from "./tasks/taskListIpc";
 import { createTray } from "./tray";
+import { registerVoiceProfileIpc } from "./voiceProfile/voiceProfileIpc";
 import { createStickyNoteWindow } from "./windows/stickyNote";
 
 app.whenReady().then(() => {
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    callback(permission === "media");
+  });
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission) => permission === "media");
+
   const userDataDir = app.getPath("userData");
   const { tasks, lastActiveDate } = loadTaskListState(userDataDir);
   const today = toLocalDateString(new Date());
@@ -16,11 +22,13 @@ app.whenReady().then(() => {
     saveTaskListState(userDataDir, { tasks: reset.taskList, lastActiveDate: reset.lastActiveDate });
   }
   const taskListApi = registerTaskListIpc(reset.taskList, userDataDir);
+  const voiceProfileApi = registerVoiceProfileIpc(userDataDir);
 
   registerReminderIpc({
     userDataDir,
     getTaskList: taskListApi.getTaskList,
     initialSettings: loadReminderSettings(userDataDir),
+    getActiveNagClipUrl: voiceProfileApi.getActiveNagClipUrl,
   });
 
   createStickyNoteWindow();

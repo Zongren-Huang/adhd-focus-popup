@@ -15,6 +15,7 @@ export interface RegisterReminderIpcOptions {
   userDataDir: string;
   getTaskList: () => TaskList;
   initialSettings: ReminderSettings;
+  getActiveNagClipUrl: () => string | null;
 }
 
 function sanitizeMinutes(value: unknown, fallback: number): number {
@@ -23,7 +24,7 @@ function sanitizeMinutes(value: unknown, fallback: number): number {
 }
 
 export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
-  const { userDataDir, getTaskList } = options;
+  const { userDataDir, getTaskList, getActiveNagClipUrl } = options;
   let settings: ReminderSettings = options.initialSettings;
   let muted = false;
   let snooze: SnoozeState | null = null;
@@ -41,8 +42,9 @@ export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
   let lastBroadcastState: ReminderPublicState = { muted: false, snoozedTaskId: null };
 
   function broadcastFire(): void {
+    const nagClipUrl = getActiveNagClipUrl();
     for (const win of BrowserWindow.getAllWindows()) {
-      win.webContents.send("reminder:fired");
+      win.webContents.send("reminder:fired", nagClipUrl);
     }
   }
 

@@ -81,3 +81,93 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
 });
 
 window.fullView.getSettings().then(applySettings);
+
+let pendingClip = null; // { blob, extension } | null
+let mediaRecorder = null;
+let recordedChunks = [];
+
+const nameInput = document.getElementById("voice-profile-name-input");
+const recordButton = document.getElementById("record-toggle-button");
+const recordStatus = document.getElementById("record-status");
+const fileInput = document.getElementById("nag-clip-file-input");
+const preview = document.getElementById("nag-clip-preview");
+const saveButton = document.getElementById("save-voice-profile-button");
+
+function updateSaveEnabled() {
+  saveButton.disabled = !(nameInput.value.trim() && pendingClip);
+}
+
+function setPendingClip(blob, extension) {
+  pendingClip = { blob, extension };
+  preview.src = URL.createObjectURL(blob);
+  preview.hidden = false;
+  updateSaveEnabled();
+}
+
+recordButton.addEventListener("click", async () => {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    return;
+  }
+  recordStatus.textContent = "";
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        recordedChunks.push(e.data);
+      }
+    };
+    mediaRecorder.onstop = () => {
+      const mimeType = mediaRecorder.mimeType;
+      const match = /audio\/([a-zA-Z0-9]+)/.exec(mimeType);
+      setPendingClip(new Blob(recordedChunks, { type: mimeType }), match ? match[1] : "webm");
+      stream.getTracks().forEach((track) => track.stop());
+      recordButton.textContent = "Start Recording";
+    };
+    mediaRecorder.start();
+    recordButton.textContent = "Stop Recording";
+  } catch (err) {
+    console.error("Microphone access failed.", err);
+    recordStatus.textContent = "Couldn't access the microphone.";
+  }
+});
+
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  if (!file) {
+    return;
+  }
+  const match = /\.([a-zA-Z0-9]+)$/.exec(file.name);
+  setPendingClip(file, match ? match[1] : "bin");
+});
+
+nameInput.addEventListener("input", updateSaveEnabled);
+
+document.getElementById("voice-profile-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!pendingClip) {
+    return;
+  }
+  const clipData = await pendingClip.blob.arrayBuffer();
+  await window.fullView.saveVoiceProfile({
+    name: nameInput.value.trim(),
+    clipData,
+    clipExtension: pendingClip.extension,
+  });
+  pendingClip = null;
+  updateSaveEnabled();
+});
+
+function applyVoiceProfile(profileView) {
+  if (profileView) {
+    nameInput.value = profileView.name;
+    preview.src = profileView.nagClipUrl;
+    preview.hidden = false;
+  }
+  updateSaveEnabled();
+}
+
+window.fullView.getVoiceProfile().then(applyVoiceProfile);
+window.fullView.onVoiceProfileUpdated(applyVoiceProfile);

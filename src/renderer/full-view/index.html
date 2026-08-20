@@ -73,6 +73,35 @@
     padding: 6px;
     font-size: 14px;
   }
+  #voice-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px;
+    max-width: 420px;
+  }
+  #voice-profile-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    width: 100%;
+  }
+  #voice-profile-name-input {
+    padding: 6px;
+    font-size: 14px;
+  }
+  #nag-clip-preview {
+    width: 100%;
+  }
+  #record-status {
+    font-size: 12px;
+    color: #a00;
+  }
 </style>
 </head>
 <body>
@@ -99,6 +128,22 @@
         <input id="default-snooze-input" type="number" min="1" required />
       </label>
       <button type="submit">Save Settings</button>
+    </form>
+
+    <h2>Voice Profile</h2>
+    <form id="voice-profile-form">
+      <label>
+        Name
+        <input id="voice-profile-name-input" type="text" required />
+      </label>
+      <button type="button" id="record-toggle-button">Start Recording</button>
+      <span id="record-status"></span>
+      <label>
+        Or upload a file
+        <input id="nag-clip-file-input" type="file" accept="audio/*" />
+      </label>
+      <audio id="nag-clip-preview" controls hidden></audio>
+      <button type="submit" id="save-voice-profile-button" disabled>Save Voice Profile</button>
     </form>
   </div>
   <script src="./app.js"></script>

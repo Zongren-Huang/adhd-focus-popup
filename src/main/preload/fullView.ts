@@ -13,4 +13,12 @@ contextBridge.exposeInMainWorld("fullView", {
   },
   getSettings: () => ipcRenderer.invoke("settings:get"),
   updateSettings: (settings: unknown) => ipcRenderer.invoke("settings:update", settings),
+  getVoiceProfile: () => ipcRenderer.invoke("voiceProfile:get"),
+  saveVoiceProfile: (payload: { name: string; clipData: ArrayBuffer; clipExtension: string }) =>
+    ipcRenderer.invoke("voiceProfile:save", payload),
+  onVoiceProfileUpdated: (callback: (profile: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, profile: unknown) => callback(profile);
+    ipcRenderer.on("voiceProfile:updated", listener);
+    return () => ipcRenderer.removeListener("voiceProfile:updated", listener);
+  },
 });

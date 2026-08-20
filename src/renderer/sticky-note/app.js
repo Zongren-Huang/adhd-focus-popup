@@ -60,4 +60,9 @@ window.stickyNote.getAllTasks().then(render);
 window.stickyNote.onTasksUpdated(render);
 window.stickyNote.getReminderState().then(applyReminderState);
 window.stickyNote.onReminderStateUpdated(applyReminderState);
-window.stickyNote.onReminderFired(flash);
+window.stickyNote.onReminderFired((nagClipUrl) => {
+  flash();
+  if (nagClipUrl) {
+    new Audio(nagClipUrl).play().catch((err) => console.error("Failed to play Nag Clip.", err));
+  }
+});
