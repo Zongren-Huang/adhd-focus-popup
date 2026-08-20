@@ -97,6 +97,23 @@
     font-weight: bold;
     color: #a00;
   }
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #8a8360;
+    color: #fff;
+    font-size: 9px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: help;
+    -webkit-app-region: no-drag;
+    flex-shrink: 0;
+    user-select: none;
+  }
   @keyframes reminder-flash {
     0%, 100% { background-color: #fff6a8; }
     50% { background-color: #ff5c5c; }
@@ -111,12 +128,15 @@
     <div class="task" id="task-text"></div>
     <div class="actions">
       <button id="mark-done-button">Mark Done</button>
+      <span class="help-icon" title="Marks the Current Task as complete. It's removed from the Sticky Note and the next task becomes current.">?</span>
       <button id="snooze-button">Snooze</button>
+      <span class="help-icon" title="Silences reminders for the Current Task for the configured snooze duration, then resumes automatically.">?</span>
     </div>
   </div>
   <div class="empty-state" id="empty-state" hidden>
     <p>No Current Task.</p>
     <button id="add-task-button">Add a Task</button>
+    <span class="help-icon" title="Opens Full View so you can add a task.">?</span>
   </div>
   <p id="reminder-off-status" hidden>Reminder is currently off</p>
   <div class="reminder-toggle-row">
@@ -125,6 +145,7 @@
       <span class="switch-slider"></span>
     </label>
     <span class="reminder-toggle-caption">Reminders</span>
+    <span class="help-icon" title="Turns all reminders on or off. While off, nothing will flash or play until you turn it back on.">?</span>
   </div>
   <script src="./app.js"></script>
 </body>

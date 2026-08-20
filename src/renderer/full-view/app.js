@@ -1,5 +1,13 @@
 let draggedId = null;
 
+function helpIcon(text) {
+  const icon = document.createElement("span");
+  icon.className = "help-icon";
+  icon.title = text;
+  icon.textContent = "?";
+  return icon;
+}
+
 function render(tasks) {
   const list = document.getElementById("task-list");
   list.innerHTML = "";
@@ -20,12 +28,16 @@ function render(tasks) {
       doneBtn.textContent = "Mark Done";
       doneBtn.addEventListener("click", () => window.fullView.markDone(task.id));
       li.appendChild(doneBtn);
+      li.appendChild(
+        helpIcon("Marks this task as complete. It stops being reminded about and won't carry over to tomorrow.")
+      );
     }
 
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Delete";
     deleteBtn.addEventListener("click", () => window.fullView.deleteTask(task.id));
     li.appendChild(deleteBtn);
+    li.appendChild(helpIcon("Permanently removes this task from the list. Unlike Mark Done, it's forgotten completely."));
 
     li.addEventListener("dragstart", () => {
       draggedId = task.id;
@@ -246,13 +258,14 @@ async function saveAckClip(setter, profileId, blob, extension) {
   await setter({ profileId, clipData, clipExtension: extension });
 }
 
-function buildAckClipRow(profileId, label, existingUrl, setter) {
+function buildAckClipRow(profileId, label, helpText, existingUrl, setter) {
   const row = document.createElement("div");
   row.className = "ack-clip-row";
 
   const labelSpan = document.createElement("span");
   labelSpan.textContent = label;
   row.appendChild(labelSpan);
+  row.appendChild(helpIcon(helpText));
 
   if (existingUrl) {
     const audio = document.createElement("audio");
@@ -309,12 +322,16 @@ function renderVoiceProfileList() {
       badge.className = "active-badge";
       badge.textContent = "Active";
       header.appendChild(badge);
+      header.appendChild(helpIcon("This is the Voice Profile currently used for Reminders."));
     } else {
       const activateButton = document.createElement("button");
       activateButton.type = "button";
       activateButton.textContent = "Set Active";
       activateButton.addEventListener("click", () => window.fullView.setActiveVoiceProfile(profile.id));
       header.appendChild(activateButton);
+      header.appendChild(
+        helpIcon("Makes this the Voice Profile used for Reminders. Only one can be active at a time.")
+      );
     }
 
     const deleteButton = document.createElement("button");
@@ -322,8 +339,14 @@ function renderVoiceProfileList() {
     deleteButton.textContent = "Delete";
     deleteButton.addEventListener("click", () => window.fullView.deleteVoiceProfile(profile.id));
     header.appendChild(deleteButton);
+    header.appendChild(helpIcon("Permanently deletes this Voice Profile and all its clips."));
 
     li.appendChild(header);
+
+    const nagLabel = document.createElement("span");
+    nagLabel.textContent = "Nag Clip";
+    li.appendChild(nagLabel);
+    li.appendChild(helpIcon("The clip played every time a Reminder fires while this Voice Profile is active."));
 
     const nagAudio = document.createElement("audio");
     nagAudio.controls = true;
@@ -331,12 +354,19 @@ function renderVoiceProfileList() {
     li.appendChild(nagAudio);
 
     li.appendChild(
-      buildAckClipRow(profile.id, "Done Acknowledgment Clip", profile.doneAckClipUrl, window.fullView.setDoneAckClip)
+      buildAckClipRow(
+        profile.id,
+        "Done Acknowledgment Clip",
+        "Optional clip played when you mark the Current Task Done. Leave unset for no sound.",
+        profile.doneAckClipUrl,
+        window.fullView.setDoneAckClip
+      )
     );
     li.appendChild(
       buildAckClipRow(
         profile.id,
         "Snooze Acknowledgment Clip",
+        "Optional clip played when you use Snooze. Leave unset for no sound.",
         profile.snoozeAckClipUrl,
         window.fullView.setSnoozeAckClip
       )

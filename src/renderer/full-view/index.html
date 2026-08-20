@@ -41,11 +41,11 @@
     border-radius: 4px;
     cursor: grab;
   }
-  #task-list li.done span {
+  #task-list li.done > span:first-child {
     text-decoration: line-through;
     color: #888;
   }
-  #task-list li span {
+  #task-list li > span:first-child {
     flex: 1;
   }
   h2 {
@@ -141,6 +141,35 @@
     width: 180px;
     flex-shrink: 0;
   }
+  .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #888;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: help;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  label > span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .list-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 4px 0 8px;
+    font-size: 12px;
+    color: #666;
+  }
 </style>
 </head>
 <body>
@@ -149,40 +178,48 @@
     <form id="add-task-form">
       <input id="add-task-input" type="text" placeholder="Add a task..." autocomplete="off" required />
       <button type="submit">Add Task</button>
+      <span class="help-icon" title="Adds a new task to the bottom of your list.">?</span>
     </form>
+    <div class="list-hint">
+      <span>Drag tasks to reorder</span>
+      <span class="help-icon" title="Drag and drop tasks to change their priority. The task at the top is your Current Task — the only one Reminders fire for.">?</span>
+    </div>
     <ul id="task-list"></ul>
 
     <h2>Reminder Settings</h2>
     <form id="settings-form">
       <label>
-        Idle threshold (minutes)
+        <span>Idle threshold (minutes) <span class="help-icon" title="How many minutes of no keyboard or mouse activity before a Reminder starts.">?</span></span>
         <input id="idle-threshold-input" type="number" min="1" required />
       </label>
       <label>
-        Reminder duration (minutes)
+        <span>Reminder duration (minutes) <span class="help-icon" title="How many minutes to keep reminding you before automatically turning reminders off.">?</span></span>
         <input id="reminder-duration-input" type="number" min="1" required />
       </label>
       <label>
-        Default snooze duration (minutes)
+        <span>Default snooze duration (minutes) <span class="help-icon" title="How long the Snooze button silences reminders for, in minutes.">?</span></span>
         <input id="default-snooze-input" type="number" min="1" required />
       </label>
       <button type="submit">Save Settings</button>
+      <span class="help-icon" title="Saves the Reminder Settings above.">?</span>
     </form>
 
     <h2>Voice Profiles</h2>
     <form id="voice-profile-form">
       <label>
-        Name
+        <span>Name <span class="help-icon" title="A name to identify this Voice Profile.">?</span></span>
         <input id="voice-profile-name-input" type="text" required />
       </label>
       <button type="button" id="record-toggle-button">Start Recording</button>
+      <span class="help-icon" title="Records a new Nag Clip using your microphone. Click again to stop.">?</span>
       <span id="record-status"></span>
       <label>
-        Or upload a file
+        <span>Or upload a file <span class="help-icon" title="Choose an existing audio file to use as the Nag Clip instead of recording.">?</span></span>
         <input id="nag-clip-file-input" type="file" accept="audio/*" />
       </label>
       <audio id="nag-clip-preview" controls hidden></audio>
       <button type="submit" id="save-voice-profile-button" disabled>Create Voice Profile</button>
+      <span class="help-icon" title="Saves a new Voice Profile using the name and clip above.">?</span>
     </form>
     <ul id="voice-profile-list"></ul>
   </div>
