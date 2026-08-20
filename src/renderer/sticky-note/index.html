@@ -43,7 +43,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    padding: 0 16px 10px;
     -webkit-app-region: no-drag;
+  }
+  .reminder-toggle-caption {
+    font-size: 12px;
+    color: #3a3a1f;
   }
   .switch {
     position: relative;
@@ -87,7 +92,7 @@
   }
   #reminder-off-status {
     margin: 0;
-    padding: 0 16px 4px;
+    padding: 4px 16px 0;
     font-size: 12px;
     font-weight: bold;
     color: #a00;
@@ -104,21 +109,22 @@
 <body>
   <div class="task-view" id="task-view" hidden>
     <div class="task" id="task-text"></div>
-    <p id="reminder-off-status" hidden>Reminder is currently off</p>
     <div class="actions">
       <button id="mark-done-button">Mark Done</button>
       <button id="snooze-button">Snooze</button>
-      <div class="reminder-toggle-row">
-        <label class="switch">
-          <input type="checkbox" id="reminder-toggle" checked />
-          <span class="switch-slider"></span>
-        </label>
-      </div>
     </div>
   </div>
   <div class="empty-state" id="empty-state" hidden>
     <p>No Current Task.</p>
     <button id="add-task-button">Add a Task</button>
+  </div>
+  <p id="reminder-off-status" hidden>Reminder is currently off</p>
+  <div class="reminder-toggle-row">
+    <label class="switch">
+      <input type="checkbox" id="reminder-toggle" checked />
+      <span class="switch-slider"></span>
+    </label>
+    <span class="reminder-toggle-caption">Reminders</span>
   </div>
   <script src="./app.js"></script>
 </body>
