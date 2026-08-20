@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld("fullView", {
   createVoiceProfile: (payload: { name: string; clipData: ArrayBuffer; clipExtension: string }) =>
     ipcRenderer.invoke("voiceProfile:create", payload),
   setActiveVoiceProfile: (profileId: string) => ipcRenderer.invoke("voiceProfile:setActive", profileId),
+  deleteVoiceProfile: (profileId: string) => ipcRenderer.invoke("voiceProfile:delete", profileId),
   setDoneAckClip: (payload: { profileId: string; clipData: ArrayBuffer; clipExtension: string }) =>
     ipcRenderer.invoke("voiceProfile:setDoneAckClip", payload),
   setSnoozeAckClip: (payload: { profileId: string; clipData: ArrayBuffer; clipExtension: string }) =>

@@ -151,6 +151,29 @@ export function registerVoiceProfileIpc(userDataDir: string): VoiceProfileIpcApi
     return persistAndBroadcast();
   });
 
+  ipcMain.handle("voiceProfile:delete", (_event, profileId: string) => {
+    const profile = findProfile(profileId);
+    const remainingProfiles = state.profiles.filter((p) => p.id !== profileId);
+    const activeProfileId =
+      state.activeProfileId === profileId ? (remainingProfiles[0]?.id ?? null) : state.activeProfileId;
+    state = { profiles: remainingProfiles, activeProfileId };
+
+    for (const fileName of [profile.nagClipFileName, profile.doneAckClipFileName, profile.snoozeAckClipFileName]) {
+      if (!fileName) {
+        continue;
+      }
+      try {
+        fs.unlinkSync(clipAbsolutePath(userDataDir, fileName));
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+          console.error("Failed to remove clip file for deleted Voice Profile.", err);
+        }
+      }
+    }
+
+    return persistAndBroadcast();
+  });
+
   ipcMain.handle("voiceProfile:setDoneAckClip", (_event, payload: SetAckClipPayload) =>
     setAckClip(
       "done-ack",

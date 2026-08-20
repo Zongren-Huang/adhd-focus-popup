@@ -146,6 +146,8 @@ function setPendingClip(blob, extension) {
   pendingClip = { blob, extension };
   preview.src = URL.createObjectURL(blob);
   preview.hidden = false;
+  recordButton.dataset.idleLabel = "Record Again";
+  recordButton.textContent = "Record Again";
   updateSaveEnabled();
 }
 
@@ -188,7 +190,7 @@ function toggleRecording(button, statusEl, onRecorded) {
           stream.getTracks().forEach((track) => track.stop());
           const sampleRate = audioContext.sampleRate;
           audioContext.close();
-          button.textContent = "Start Recording";
+          button.textContent = button.dataset.idleLabel || "Start Recording";
           activeRecorder = null;
           onRecorded(pcmChunksToWavBlob(chunks, sampleRate), "wav");
         },
@@ -234,6 +236,8 @@ document.getElementById("voice-profile-form").addEventListener("submit", async (
   pendingClip = null;
   preview.hidden = true;
   preview.removeAttribute("src");
+  delete recordButton.dataset.idleLabel;
+  recordButton.textContent = "Start Recording";
   updateSaveEnabled();
 });
 
@@ -265,7 +269,8 @@ function buildAckClipRow(profileId, label, existingUrl, setter) {
 
   const rowRecordButton = document.createElement("button");
   rowRecordButton.type = "button";
-  rowRecordButton.textContent = "Start Recording";
+  rowRecordButton.textContent = existingUrl ? "Record Again" : "Start Recording";
+  rowRecordButton.dataset.idleLabel = rowRecordButton.textContent;
   const status = document.createElement("span");
   rowRecordButton.addEventListener("click", () => toggleRecording(rowRecordButton, status, onCaptured));
   row.appendChild(rowRecordButton);
@@ -311,6 +316,13 @@ function renderVoiceProfileList() {
       activateButton.addEventListener("click", () => window.fullView.setActiveVoiceProfile(profile.id));
       header.appendChild(activateButton);
     }
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => window.fullView.deleteVoiceProfile(profile.id));
+    header.appendChild(deleteButton);
+
     li.appendChild(header);
 
     const nagAudio = document.createElement("audio");
