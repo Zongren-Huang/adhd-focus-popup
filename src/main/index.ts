@@ -1,8 +1,14 @@
 import { app } from "electron";
-import { createStickyNoteWindow } from "./windows/stickyNote";
+import { loadTaskList } from "./persistence/taskListStore";
+import { registerTaskListIpc } from "./tasks/taskListIpc";
 import { createTray } from "./tray";
+import { createStickyNoteWindow } from "./windows/stickyNote";
 
 app.whenReady().then(() => {
+  const userDataDir = app.getPath("userData");
+  const taskList = loadTaskList(userDataDir);
+  registerTaskListIpc(taskList, userDataDir);
+
   createStickyNoteWindow();
   createTray();
 });

@@ -14,17 +14,31 @@
     overflow: hidden;
   }
   .task {
-    padding: 16px;
+    padding: 16px 16px 8px;
     font-size: 16px;
     line-height: 1.4;
     color: #3a3a1f;
   }
+  .empty-state {
+    padding: 16px;
+    font-size: 14px;
+    color: #3a3a1f;
+  }
+  button {
+    -webkit-app-region: no-drag;
+    margin: 0 16px 12px;
+  }
 </style>
 </head>
 <body>
-  <div class="task" id="task"></div>
-  <script>
-    document.getElementById("task").textContent = window.stickyNote.taskText;
-  </script>
+  <div class="task-view" id="task-view" hidden>
+    <div class="task" id="task-text"></div>
+    <button id="mark-done-button">Mark Done</button>
+  </div>
+  <div class="empty-state" id="empty-state" hidden>
+    <p>No Current Task.</p>
+    <button id="add-task-button">Add a Task</button>
+  </div>
+  <script src="./app.js"></script>
 </body>
 </html>

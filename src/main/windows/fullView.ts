@@ -1,3 +1,4 @@
+import path from "path";
 import { createSingletonWindowOpener } from "./singletonWindow";
 
 export const openFullViewWindow = createSingletonWindowOpener(
@@ -8,6 +9,7 @@ export const openFullViewWindow = createSingletonWindowOpener(
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, "..", "preload", "fullView.js"),
     },
   }
 );

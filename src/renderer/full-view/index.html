@@ -12,15 +12,53 @@
     background: #fafafa;
     color: #222;
   }
-  .placeholder {
+  .full-view {
     padding: 24px;
+  }
+  #add-task-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  #add-task-input {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+  }
+  #task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  #task-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: grab;
+  }
+  #task-list li.done span {
+    text-decoration: line-through;
+    color: #888;
+  }
+  #task-list li span {
+    flex: 1;
   }
 </style>
 </head>
 <body>
-  <div class="placeholder">
+  <div class="full-view">
     <h1>Full View</h1>
-    <p>Task list, priority reordering, and Voice Profile management land here in later tickets.</p>
+    <form id="add-task-form">
+      <input id="add-task-input" type="text" placeholder="Add a task..." autocomplete="off" required />
+      <button type="submit">Add Task</button>
+    </form>
+    <ul id="task-list"></ul>
   </div>
+  <script src="./app.js"></script>
 </body>
 </html>
