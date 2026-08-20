@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron";
-import { saveTaskList } from "../persistence/taskListStore";
+import { saveTaskListState } from "../persistence/taskListStore";
 import { openFullViewWindow } from "../windows/fullView";
+import { toLocalDateString } from "./dailyReset";
 import { addTask, deleteTask, markTaskDone, reorderTasks, type TaskList } from "./taskList";
 
 export function registerTaskListIpc(initialTaskList: TaskList, userDataDir: string): void {
@@ -14,7 +15,7 @@ export function registerTaskListIpc(initialTaskList: TaskList, userDataDir: stri
 
   function mutate(next: TaskList): void {
     taskList = next;
-    saveTaskList(userDataDir, taskList);
+    saveTaskListState(userDataDir, { tasks: taskList, lastActiveDate: toLocalDateString(new Date()) });
     broadcast();
   }
 

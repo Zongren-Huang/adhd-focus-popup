@@ -1,13 +1,19 @@
 import { app } from "electron";
-import { loadTaskList } from "./persistence/taskListStore";
+import { loadTaskListState, saveTaskListState } from "./persistence/taskListStore";
+import { applyDailyReset, toLocalDateString } from "./tasks/dailyReset";
 import { registerTaskListIpc } from "./tasks/taskListIpc";
 import { createTray } from "./tray";
 import { createStickyNoteWindow } from "./windows/stickyNote";
 
 app.whenReady().then(() => {
   const userDataDir = app.getPath("userData");
-  const taskList = loadTaskList(userDataDir);
-  registerTaskListIpc(taskList, userDataDir);
+  const { tasks, lastActiveDate } = loadTaskListState(userDataDir);
+  const today = toLocalDateString(new Date());
+  const reset = applyDailyReset(tasks, lastActiveDate, today);
+  if (reset.didReset) {
+    saveTaskListState(userDataDir, { tasks: reset.taskList, lastActiveDate: reset.lastActiveDate });
+  }
+  registerTaskListIpc(reset.taskList, userDataDir);
 
   createStickyNoteWindow();
   createTray();

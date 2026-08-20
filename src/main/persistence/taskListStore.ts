@@ -4,27 +4,36 @@ import type { TaskList } from "../tasks/taskList";
 
 const FILE_NAME = "tasks.json";
 
+export interface TaskListState {
+  tasks: TaskList;
+  lastActiveDate: string | null;
+}
+
 interface TaskListFile {
   version: 1;
   tasks: TaskList;
+  lastActiveDate: string | null;
 }
 
-export function loadTaskList(userDataDir: string): TaskList {
+export function loadTaskListState(userDataDir: string): TaskListState {
   const filePath = path.join(userDataDir, FILE_NAME);
   try {
     const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8")) as Partial<TaskListFile>;
-    return Array.isArray(parsed.tasks) ? parsed.tasks : [];
+    return {
+      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
+      lastActiveDate: typeof parsed.lastActiveDate === "string" ? parsed.lastActiveDate : null,
+    };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-      return [];
+      return { tasks: [], lastActiveDate: null };
     }
     console.error("Failed to load Task List from disk; starting with an empty list.", err);
-    return [];
+    return { tasks: [], lastActiveDate: null };
   }
 }
 
-export function saveTaskList(userDataDir: string, taskList: TaskList): void {
+export function saveTaskListState(userDataDir: string, state: TaskListState): void {
   fs.mkdirSync(userDataDir, { recursive: true });
-  const payload: TaskListFile = { version: 1, tasks: taskList };
+  const payload: TaskListFile = { version: 1, tasks: state.tasks, lastActiveDate: state.lastActiveDate };
   fs.writeFileSync(path.join(userDataDir, FILE_NAME), JSON.stringify(payload, null, 2), "utf-8");
 }
