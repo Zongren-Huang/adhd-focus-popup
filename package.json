@@ -9,12 +9,37 @@
     "start": "npm run build && electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dist": "npm run build && electron-builder --win"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "electron": "^33.2.1",
+    "electron-builder": "^26.15.3",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "build": {
+    "appId": "com.zongrenhuang.adhdfocuspopup",
+    "productName": "ADHD Focus Popup",
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/app-icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
