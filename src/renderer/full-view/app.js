@@ -42,9 +42,16 @@ function hideHelpPopover() {
   helpPopover.hidden = true;
 }
 
+const HELP_HOVER_DELAY_MS = 500;
+let hoverTimer = null;
+
 document.querySelectorAll(".help-icon").forEach((icon) => {
-  icon.addEventListener("mouseenter", () => showHelpPopover(icon));
+  icon.addEventListener("mouseenter", () => {
+    clearTimeout(hoverTimer);
+    hoverTimer = setTimeout(() => showHelpPopover(icon), HELP_HOVER_DELAY_MS);
+  });
   icon.addEventListener("mouseleave", () => {
+    clearTimeout(hoverTimer);
     if (pinnedHelpIcon !== icon) {
       hideHelpPopover();
     }
