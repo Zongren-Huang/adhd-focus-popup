@@ -11,12 +11,31 @@ helpPopover.hidden = true;
 document.body.appendChild(helpPopover);
 let pinnedHelpIcon = null;
 
+// Positions the popover so it always shows in full, flipping to whichever
+// side of the icon keeps it inside the window instead of getting clipped
+// at the edge.
 function showHelpPopover(icon) {
   helpPopover.textContent = icon.dataset.help;
-  const rect = icon.getBoundingClientRect();
-  helpPopover.style.left = `${rect.left}px`;
-  helpPopover.style.top = `${rect.bottom + 6}px`;
-  helpPopover.hidden = false;
+  helpPopover.hidden = false; // must be visible to measure its size below
+
+  const margin = 8;
+  const iconRect = icon.getBoundingClientRect();
+  const popoverRect = helpPopover.getBoundingClientRect();
+
+  let left = iconRect.left;
+  if (left + popoverRect.width > window.innerWidth - margin) {
+    left = window.innerWidth - popoverRect.width - margin;
+  }
+  left = Math.max(margin, left);
+
+  let top = iconRect.bottom + 6;
+  if (top + popoverRect.height > window.innerHeight - margin) {
+    top = iconRect.top - popoverRect.height - 6; // flip above the icon
+  }
+  top = Math.max(margin, top);
+
+  helpPopover.style.left = `${left}px`;
+  helpPopover.style.top = `${top}px`;
 }
 
 function hideHelpPopover() {
