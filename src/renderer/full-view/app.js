@@ -2,32 +2,50 @@ let draggedId = null;
 
 // Help icons (the "?" badges) exist only for the Reminder Settings fields
 // (Idle threshold, Reminder duration, Default snooze duration) -- static
-// markup in index.html, not created here. This wires click-to-toggle for
-// them, in addition to the native title-attribute hover tooltip.
+// markup in index.html, not created here. Hover and click both show this
+// same popover (hover previews it, click pins it open) so there's one
+// consistent look rather than the browser's native title-attribute tooltip.
 const helpPopover = document.createElement("div");
 helpPopover.className = "help-popover";
 helpPopover.hidden = true;
 document.body.appendChild(helpPopover);
-let openHelpIcon = null;
+let pinnedHelpIcon = null;
 
-document.addEventListener("click", (e) => {
-  const icon = e.target.closest(".help-icon");
-  if (!icon) {
-    helpPopover.hidden = true;
-    openHelpIcon = null;
-    return;
-  }
-  if (openHelpIcon === icon) {
-    helpPopover.hidden = true;
-    openHelpIcon = null;
-    return;
-  }
-  helpPopover.textContent = icon.title;
+function showHelpPopover(icon) {
+  helpPopover.textContent = icon.dataset.help;
   const rect = icon.getBoundingClientRect();
   helpPopover.style.left = `${rect.left}px`;
   helpPopover.style.top = `${rect.bottom + 6}px`;
   helpPopover.hidden = false;
-  openHelpIcon = icon;
+}
+
+function hideHelpPopover() {
+  helpPopover.hidden = true;
+}
+
+document.querySelectorAll(".help-icon").forEach((icon) => {
+  icon.addEventListener("mouseenter", () => showHelpPopover(icon));
+  icon.addEventListener("mouseleave", () => {
+    if (pinnedHelpIcon !== icon) {
+      hideHelpPopover();
+    }
+  });
+});
+
+document.addEventListener("click", (e) => {
+  const icon = e.target.closest(".help-icon");
+  if (!icon) {
+    hideHelpPopover();
+    pinnedHelpIcon = null;
+    return;
+  }
+  if (pinnedHelpIcon === icon) {
+    hideHelpPopover();
+    pinnedHelpIcon = null;
+    return;
+  }
+  showHelpPopover(icon);
+  pinnedHelpIcon = icon;
 });
 
 function render(tasks) {
