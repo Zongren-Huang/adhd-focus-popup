@@ -83,8 +83,8 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
 window.fullView.getSettings().then(applySettings);
 
 let pendingClip = null; // { blob, extension } | null
-let mediaRecorder = null;
-let recordedChunks = [];
+let voiceProfileState = { profiles: [], activeProfileId: null };
+let activeRecorder = null; // { mediaRecorder, stream, button } | null — only one mic stream at a time
 
 const nameInput = document.getElementById("voice-profile-name-input");
 const recordButton = document.getElementById("record-toggle-button");
@@ -104,34 +104,50 @@ function setPendingClip(blob, extension) {
   updateSaveEnabled();
 }
 
-recordButton.addEventListener("click", async () => {
-  if (mediaRecorder && mediaRecorder.state === "recording") {
-    mediaRecorder.stop();
+// Shared by the create-form's Record button and every profile row's Done/Snooze
+// Ack Clip Record buttons — only one MediaRecorder can usefully run at a time.
+function toggleRecording(button, statusEl, onRecorded) {
+  if (activeRecorder && activeRecorder.mediaRecorder.state === "recording") {
+    if (activeRecorder.button === button) {
+      activeRecorder.mediaRecorder.stop();
+    }
     return;
   }
-  recordStatus.textContent = "";
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recordedChunks = [];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        recordedChunks.push(e.data);
-      }
-    };
-    mediaRecorder.onstop = () => {
-      const mimeType = mediaRecorder.mimeType;
-      const match = /audio\/([a-zA-Z0-9]+)/.exec(mimeType);
-      setPendingClip(new Blob(recordedChunks, { type: mimeType }), match ? match[1] : "webm");
-      stream.getTracks().forEach((track) => track.stop());
-      recordButton.textContent = "Start Recording";
-    };
-    mediaRecorder.start();
-    recordButton.textContent = "Stop Recording";
-  } catch (err) {
-    console.error("Microphone access failed.", err);
-    recordStatus.textContent = "Couldn't access the microphone.";
+  if (statusEl) {
+    statusEl.textContent = "";
   }
+  navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then((stream) => {
+      const recordedChunks = [];
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          recordedChunks.push(e.data);
+        }
+      };
+      mediaRecorder.onstop = () => {
+        const mimeType = mediaRecorder.mimeType;
+        const match = /audio\/([a-zA-Z0-9]+)/.exec(mimeType);
+        onRecorded(new Blob(recordedChunks, { type: mimeType }), match ? match[1] : "webm");
+        stream.getTracks().forEach((track) => track.stop());
+        button.textContent = "Start Recording";
+        activeRecorder = null;
+      };
+      activeRecorder = { mediaRecorder, stream, button };
+      mediaRecorder.start();
+      button.textContent = "Stop Recording";
+    })
+    .catch((err) => {
+      console.error("Microphone access failed.", err);
+      if (statusEl) {
+        statusEl.textContent = "Couldn't access the microphone.";
+      }
+    });
+}
+
+recordButton.addEventListener("click", () => {
+  toggleRecording(recordButton, recordStatus, (blob, extension) => setPendingClip(blob, extension));
 });
 
 fileInput.addEventListener("change", () => {
@@ -151,23 +167,120 @@ document.getElementById("voice-profile-form").addEventListener("submit", async (
     return;
   }
   const clipData = await pendingClip.blob.arrayBuffer();
-  await window.fullView.saveVoiceProfile({
+  await window.fullView.createVoiceProfile({
     name: nameInput.value.trim(),
     clipData,
     clipExtension: pendingClip.extension,
   });
+  nameInput.value = "";
+  fileInput.value = "";
   pendingClip = null;
+  preview.hidden = true;
+  preview.removeAttribute("src");
   updateSaveEnabled();
 });
 
-function applyVoiceProfile(profileView) {
-  if (profileView) {
-    nameInput.value = profileView.name;
-    preview.src = profileView.nagClipUrl;
-    preview.hidden = false;
-  }
-  updateSaveEnabled();
+async function saveAckClip(setter, profileId, blob, extension) {
+  const clipData = await blob.arrayBuffer();
+  await setter({ profileId, clipData, clipExtension: extension });
 }
 
-window.fullView.getVoiceProfile().then(applyVoiceProfile);
-window.fullView.onVoiceProfileUpdated(applyVoiceProfile);
+function buildAckClipRow(profileId, label, existingUrl, setter) {
+  const row = document.createElement("div");
+  row.className = "ack-clip-row";
+
+  const labelSpan = document.createElement("span");
+  labelSpan.textContent = label;
+  row.appendChild(labelSpan);
+
+  if (existingUrl) {
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.src = existingUrl;
+    row.appendChild(audio);
+  } else {
+    const noneSpan = document.createElement("span");
+    noneSpan.textContent = "No clip set";
+    row.appendChild(noneSpan);
+  }
+
+  const onCaptured = (blob, extension) => saveAckClip(setter, profileId, blob, extension);
+
+  const rowRecordButton = document.createElement("button");
+  rowRecordButton.type = "button";
+  rowRecordButton.textContent = "Start Recording";
+  const status = document.createElement("span");
+  rowRecordButton.addEventListener("click", () => toggleRecording(rowRecordButton, status, onCaptured));
+  row.appendChild(rowRecordButton);
+
+  const rowFileInput = document.createElement("input");
+  rowFileInput.type = "file";
+  rowFileInput.accept = "audio/*";
+  rowFileInput.addEventListener("change", () => {
+    const file = rowFileInput.files[0];
+    if (!file) {
+      return;
+    }
+    const match = /\.([a-zA-Z0-9]+)$/.exec(file.name);
+    onCaptured(file, match ? match[1] : "bin");
+  });
+  row.appendChild(rowFileInput);
+  row.appendChild(status);
+
+  return row;
+}
+
+function renderVoiceProfileList() {
+  const list = document.getElementById("voice-profile-list");
+  list.innerHTML = "";
+  for (const profile of voiceProfileState.profiles) {
+    const li = document.createElement("li");
+    const isActive = profile.id === voiceProfileState.activeProfileId;
+
+    const header = document.createElement("div");
+    header.className = "voice-profile-header";
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = profile.name;
+    header.appendChild(nameSpan);
+    if (isActive) {
+      const badge = document.createElement("span");
+      badge.className = "active-badge";
+      badge.textContent = "Active";
+      header.appendChild(badge);
+    } else {
+      const activateButton = document.createElement("button");
+      activateButton.type = "button";
+      activateButton.textContent = "Set Active";
+      activateButton.addEventListener("click", () => window.fullView.setActiveVoiceProfile(profile.id));
+      header.appendChild(activateButton);
+    }
+    li.appendChild(header);
+
+    const nagAudio = document.createElement("audio");
+    nagAudio.controls = true;
+    nagAudio.src = profile.nagClipUrl;
+    li.appendChild(nagAudio);
+
+    li.appendChild(
+      buildAckClipRow(profile.id, "Done Acknowledgment Clip", profile.doneAckClipUrl, window.fullView.setDoneAckClip)
+    );
+    li.appendChild(
+      buildAckClipRow(
+        profile.id,
+        "Snooze Acknowledgment Clip",
+        profile.snoozeAckClipUrl,
+        window.fullView.setSnoozeAckClip
+      )
+    );
+
+    list.appendChild(li);
+  }
+}
+
+function applyVoiceProfileState(state) {
+  voiceProfileState = state ?? { profiles: [], activeProfileId: null };
+  renderVoiceProfileList();
+}
+
+window.fullView.getVoiceProfileState().then(applyVoiceProfileState);
+window.fullView.onVoiceProfileStateUpdated(applyVoiceProfileState);

@@ -22,4 +22,9 @@ contextBridge.exposeInMainWorld("stickyNote", {
     ipcRenderer.on("reminder:stateUpdated", listener);
     return () => ipcRenderer.removeListener("reminder:stateUpdated", listener);
   },
+  onPlayClip: (callback: (clipUrl: string) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, clipUrl: string) => callback(clipUrl);
+    ipcRenderer.on("clip:play", listener);
+    return () => ipcRenderer.removeListener("clip:play", listener);
+  },
 });

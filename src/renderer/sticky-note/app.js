@@ -66,3 +66,6 @@ window.stickyNote.onReminderFired((nagClipUrl) => {
     new Audio(nagClipUrl).play().catch((err) => console.error("Failed to play Nag Clip.", err));
   }
 });
+window.stickyNote.onPlayClip((clipUrl) => {
+  new Audio(clipUrl).play().catch((err) => console.error("Failed to play Acknowledgment Clip.", err));
+});

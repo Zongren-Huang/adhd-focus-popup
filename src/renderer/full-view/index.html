@@ -102,6 +102,43 @@
     font-size: 12px;
     color: #a00;
   }
+  #voice-profile-list {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    max-width: 480px;
+  }
+  #voice-profile-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  .voice-profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: bold;
+  }
+  .active-badge {
+    font-size: 12px;
+    font-weight: normal;
+    color: #2a7a2a;
+  }
+  .ack-clip-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .ack-clip-row audio {
+    max-width: 160px;
+  }
 </style>
 </head>
 <body>
@@ -130,7 +167,7 @@
       <button type="submit">Save Settings</button>
     </form>
 
-    <h2>Voice Profile</h2>
+    <h2>Voice Profiles</h2>
     <form id="voice-profile-form">
       <label>
         Name
@@ -143,8 +180,9 @@
         <input id="nag-clip-file-input" type="file" accept="audio/*" />
       </label>
       <audio id="nag-clip-preview" controls hidden></audio>
-      <button type="submit" id="save-voice-profile-button" disabled>Save Voice Profile</button>
+      <button type="submit" id="save-voice-profile-button" disabled>Create Voice Profile</button>
     </form>
+    <ul id="voice-profile-list"></ul>
   </div>
   <script src="./app.js"></script>
 </body>

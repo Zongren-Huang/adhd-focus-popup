@@ -13,11 +13,16 @@ contextBridge.exposeInMainWorld("fullView", {
   },
   getSettings: () => ipcRenderer.invoke("settings:get"),
   updateSettings: (settings: unknown) => ipcRenderer.invoke("settings:update", settings),
-  getVoiceProfile: () => ipcRenderer.invoke("voiceProfile:get"),
-  saveVoiceProfile: (payload: { name: string; clipData: ArrayBuffer; clipExtension: string }) =>
-    ipcRenderer.invoke("voiceProfile:save", payload),
-  onVoiceProfileUpdated: (callback: (profile: unknown) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, profile: unknown) => callback(profile);
+  getVoiceProfileState: () => ipcRenderer.invoke("voiceProfile:getState"),
+  createVoiceProfile: (payload: { name: string; clipData: ArrayBuffer; clipExtension: string }) =>
+    ipcRenderer.invoke("voiceProfile:create", payload),
+  setActiveVoiceProfile: (profileId: string) => ipcRenderer.invoke("voiceProfile:setActive", profileId),
+  setDoneAckClip: (payload: { profileId: string; clipData: ArrayBuffer; clipExtension: string }) =>
+    ipcRenderer.invoke("voiceProfile:setDoneAckClip", payload),
+  setSnoozeAckClip: (payload: { profileId: string; clipData: ArrayBuffer; clipExtension: string }) =>
+    ipcRenderer.invoke("voiceProfile:setSnoozeAckClip", payload),
+  onVoiceProfileStateUpdated: (callback: (state: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, state: unknown) => callback(state);
     ipcRenderer.on("voiceProfile:updated", listener);
     return () => ipcRenderer.removeListener("voiceProfile:updated", listener);
   },

@@ -16,6 +16,7 @@ export interface RegisterReminderIpcOptions {
   getTaskList: () => TaskList;
   initialSettings: ReminderSettings;
   getActiveNagClipUrl: () => string | null;
+  getActiveSnoozeAckClipUrl: () => string | null;
 }
 
 function sanitizeMinutes(value: unknown, fallback: number): number {
@@ -24,7 +25,7 @@ function sanitizeMinutes(value: unknown, fallback: number): number {
 }
 
 export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
-  const { userDataDir, getTaskList, getActiveNagClipUrl } = options;
+  const { userDataDir, getTaskList, getActiveNagClipUrl, getActiveSnoozeAckClipUrl } = options;
   let settings: ReminderSettings = options.initialSettings;
   let muted = false;
   let snooze: SnoozeState | null = null;
@@ -45,6 +46,12 @@ export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
     const nagClipUrl = getActiveNagClipUrl();
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send("reminder:fired", nagClipUrl);
+    }
+  }
+
+  function broadcastPlayClip(clipUrl: string): void {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send("clip:play", clipUrl);
     }
   }
 
@@ -84,6 +91,10 @@ export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
     const currentTask = getCurrentTask(getTaskList());
     if (currentTask) {
       snooze = { taskId: currentTask.id, expiresAt: Date.now() + settings.defaultSnoozeMinutes * MINUTE_MS };
+      const clipUrl = getActiveSnoozeAckClipUrl();
+      if (clipUrl) {
+        broadcastPlayClip(clipUrl);
+      }
     }
     lastBroadcastState = computePublicState(Date.now());
     return lastBroadcastState;

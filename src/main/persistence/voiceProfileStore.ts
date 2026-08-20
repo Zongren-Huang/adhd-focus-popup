@@ -8,34 +8,68 @@ export interface VoiceProfile {
   id: string;
   name: string;
   nagClipFileName: string;
+  doneAckClipFileName: string | null;
+  snoozeAckClipFileName: string | null;
+}
+
+export interface VoiceProfileState {
+  profiles: VoiceProfile[];
+  activeProfileId: string | null;
 }
 
 interface VoiceProfileFile {
   version: 1;
-  profile: VoiceProfile | null;
+  profiles: VoiceProfile[];
+  activeProfileId: string | null;
 }
 
-export function loadVoiceProfile(userDataDir: string): VoiceProfile | null {
+const EMPTY_STATE: VoiceProfileState = { profiles: [], activeProfileId: null };
+
+function isValidProfile(p: unknown): p is VoiceProfile {
+  if (typeof p !== "object" || p === null) {
+    return false;
+  }
+  const c = p as Partial<VoiceProfile>;
+  return (
+    typeof c.id === "string" &&
+    typeof c.name === "string" &&
+    typeof c.nagClipFileName === "string" &&
+    (c.doneAckClipFileName === null || typeof c.doneAckClipFileName === "string") &&
+    (c.snoozeAckClipFileName === null || typeof c.snoozeAckClipFileName === "string")
+  );
+}
+
+export function loadVoiceProfileState(userDataDir: string): VoiceProfileState {
   const filePath = path.join(userDataDir, FILE_NAME);
   try {
     const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8")) as Partial<VoiceProfileFile>;
-    const p = parsed.profile;
-    if (p && typeof p.id === "string" && typeof p.name === "string" && typeof p.nagClipFileName === "string") {
-      return { id: p.id, name: p.name, nagClipFileName: p.nagClipFileName };
+    if (!Array.isArray(parsed.profiles) || !parsed.profiles.every(isValidProfile)) {
+      return EMPTY_STATE;
     }
-    return null;
+    const profiles: VoiceProfile[] = parsed.profiles.map((p) => ({
+      id: p.id,
+      name: p.name,
+      nagClipFileName: p.nagClipFileName,
+      doneAckClipFileName: p.doneAckClipFileName,
+      snoozeAckClipFileName: p.snoozeAckClipFileName,
+    }));
+    const activeProfileId =
+      typeof parsed.activeProfileId === "string" && profiles.some((p) => p.id === parsed.activeProfileId)
+        ? parsed.activeProfileId
+        : null;
+    return { profiles, activeProfileId };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") {
-      return null;
+      return EMPTY_STATE;
     }
-    console.error("Failed to load Voice Profile from disk; treating as none saved.", err);
-    return null;
+    console.error("Failed to load Voice Profiles from disk; starting with none saved.", err);
+    return EMPTY_STATE;
   }
 }
 
-export function saveVoiceProfile(userDataDir: string, profile: VoiceProfile): void {
+export function saveVoiceProfileState(userDataDir: string, state: VoiceProfileState): void {
   fs.mkdirSync(userDataDir, { recursive: true });
-  const payload: VoiceProfileFile = { version: 1, profile };
+  const payload: VoiceProfileFile = { version: 1, profiles: state.profiles, activeProfileId: state.activeProfileId };
   fs.writeFileSync(path.join(userDataDir, FILE_NAME), JSON.stringify(payload, null, 2), "utf-8");
 }
 

@@ -21,14 +21,19 @@ app.whenReady().then(() => {
   if (reset.didReset) {
     saveTaskListState(userDataDir, { tasks: reset.taskList, lastActiveDate: reset.lastActiveDate });
   }
-  const taskListApi = registerTaskListIpc(reset.taskList, userDataDir);
   const voiceProfileApi = registerVoiceProfileIpc(userDataDir);
+  const taskListApi = registerTaskListIpc({
+    initialTaskList: reset.taskList,
+    userDataDir,
+    getActiveDoneAckClipUrl: voiceProfileApi.getActiveDoneAckClipUrl,
+  });
 
   registerReminderIpc({
     userDataDir,
     getTaskList: taskListApi.getTaskList,
     initialSettings: loadReminderSettings(userDataDir),
     getActiveNagClipUrl: voiceProfileApi.getActiveNagClipUrl,
+    getActiveSnoozeAckClipUrl: voiceProfileApi.getActiveSnoozeAckClipUrl,
   });
 
   createStickyNoteWindow();
