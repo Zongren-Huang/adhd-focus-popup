@@ -16,5 +16,6 @@ export const createStickyNoteWindow = createSingletonWindowOpener(
       nodeIntegration: false,
       preload: path.join(__dirname, "..", "preload", "stickyNote.js"),
     },
-  }
+  },
+  true
 );

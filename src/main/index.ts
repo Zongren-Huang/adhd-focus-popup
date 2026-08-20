@@ -1,4 +1,5 @@
 import { app, session } from "electron";
+import { markQuitting } from "./appLifecycle";
 import { loadReminderSettings } from "./persistence/settingsStore";
 import { loadTaskListState, saveTaskListState } from "./persistence/taskListStore";
 import { registerReminderIpc } from "./reminder/reminderIpc";
@@ -9,6 +10,8 @@ import { registerVoiceProfileIpc } from "./voiceProfile/voiceProfileIpc";
 import { createStickyNoteWindow } from "./windows/stickyNote";
 
 app.whenReady().then(() => {
+  app.setLoginItemSettings({ openAtLogin: true });
+
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     callback(permission === "media");
   });
@@ -40,7 +43,11 @@ app.whenReady().then(() => {
   createTray();
 });
 
+app.on("before-quit", () => {
+  markQuitting();
+});
+
 app.on("window-all-closed", () => {
   // The tray icon keeps the app alive even with no windows open.
-  // Ticket #7 (tray lifecycle) owns explicit quit behavior.
+  // Explicit quit only happens via the tray menu's "Quit" item.
 });

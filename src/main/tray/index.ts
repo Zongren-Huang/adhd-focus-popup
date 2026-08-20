@@ -1,6 +1,7 @@
 import { app, Menu, Tray, nativeImage } from "electron";
 import path from "path";
 import { openFullViewWindow } from "../windows/fullView";
+import { createStickyNoteWindow } from "../windows/stickyNote";
 
 // Kept alive at module scope: Electron destroys the tray icon if this is garbage collected.
 let tray: Tray | null = null;
@@ -18,8 +19,13 @@ export function createTray(): Tray {
         label: "Open Full View",
         click: () => openFullViewWindow(),
       },
+      {
+        label: "Quit",
+        click: () => app.quit(),
+      },
     ])
   );
+  tray.on("click", () => createStickyNoteWindow());
 
   return tray;
 }
