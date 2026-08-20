@@ -84,7 +84,52 @@ window.fullView.getSettings().then(applySettings);
 
 let pendingClip = null; // { blob, extension } | null
 let voiceProfileState = { profiles: [], activeProfileId: null };
-let activeRecorder = null; // { mediaRecorder, stream, button } | null — only one mic stream at a time
+let activeRecorder = null; // { button, stop } | null — only one mic stream at a time
+
+// MediaRecorder's WebM/Opus encoder loses several seconds of audio at the start of every
+// recording in this Electron build (confirmed by decoding recordings back with
+// AudioContext.decodeAudioData: held time and decoded time diverge by a large, consistent
+// amount regardless of recording length). Capturing raw PCM directly via a ScriptProcessorNode
+// and hand-encoding a WAV bypasses that encoder entirely and does not lose audio.
+function pcmChunksToWavBlob(chunks, sampleRate) {
+  const totalSamples = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const bytesPerSample = 2;
+  const dataSize = totalSamples * bytesPerSample;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  function writeString(offset, str) {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
+  }
+
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeString(8, "WAVE");
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * bytesPerSample, true);
+  view.setUint16(32, bytesPerSample, true);
+  view.setUint16(34, 16, true);
+  writeString(36, "data");
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+  for (const chunk of chunks) {
+    for (let i = 0; i < chunk.length; i++) {
+      let sample = Math.max(-1, Math.min(1, chunk[i]));
+      sample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+      view.setInt16(offset, sample, true);
+      offset += 2;
+    }
+  }
+
+  return new Blob([buffer], { type: "audio/wav" });
+}
 
 const nameInput = document.getElementById("voice-profile-name-input");
 const recordButton = document.getElementById("record-toggle-button");
@@ -105,11 +150,11 @@ function setPendingClip(blob, extension) {
 }
 
 // Shared by the create-form's Record button and every profile row's Done/Snooze
-// Ack Clip Record buttons — only one MediaRecorder can usefully run at a time.
+// Ack Clip Record buttons — only one microphone stream can usefully run at a time.
 function toggleRecording(button, statusEl, onRecorded) {
-  if (activeRecorder && activeRecorder.mediaRecorder.state === "recording") {
+  if (activeRecorder) {
     if (activeRecorder.button === button) {
-      activeRecorder.mediaRecorder.stop();
+      activeRecorder.stop();
     }
     return;
   }
@@ -119,23 +164,35 @@ function toggleRecording(button, statusEl, onRecorded) {
   navigator.mediaDevices
     .getUserMedia({ audio: true })
     .then((stream) => {
-      const recordedChunks = [];
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          recordedChunks.push(e.data);
-        }
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      const silentGain = audioContext.createGain();
+      silentGain.gain.value = 0; // avoid audible mic feedback; still needed to keep the graph flowing
+      const chunks = [];
+
+      processor.onaudioprocess = (e) => {
+        chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
       };
-      mediaRecorder.onstop = () => {
-        const mimeType = mediaRecorder.mimeType;
-        const match = /audio\/([a-zA-Z0-9]+)/.exec(mimeType);
-        onRecorded(new Blob(recordedChunks, { type: mimeType }), match ? match[1] : "webm");
-        stream.getTracks().forEach((track) => track.stop());
-        button.textContent = "Start Recording";
-        activeRecorder = null;
+
+      source.connect(processor);
+      processor.connect(silentGain);
+      silentGain.connect(audioContext.destination);
+
+      activeRecorder = {
+        button,
+        stop: () => {
+          processor.disconnect();
+          source.disconnect();
+          silentGain.disconnect();
+          stream.getTracks().forEach((track) => track.stop());
+          const sampleRate = audioContext.sampleRate;
+          audioContext.close();
+          button.textContent = "Start Recording";
+          activeRecorder = null;
+          onRecorded(pcmChunksToWavBlob(chunks, sampleRate), "wav");
+        },
       };
-      activeRecorder = { mediaRecorder, stream, button };
-      mediaRecorder.start();
       button.textContent = "Stop Recording";
     })
     .catch((err) => {
