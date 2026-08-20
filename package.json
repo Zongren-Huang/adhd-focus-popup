@@ -1,0 +1,20 @@
+{
+  "name": "adhd-focus-popup",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Windows desktop app that keeps a single prioritized task visible and nags you with a custom voice when you go idle.",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "npm run build && electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "^33.2.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
