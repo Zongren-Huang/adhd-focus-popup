@@ -22,6 +22,9 @@
 </style>
 </head>
 <body>
-  <div class="task">Finish setting up ADHD Focus Popup</div>
+  <div class="task" id="task"></div>
+  <script>
+    document.getElementById("task").textContent = window.stickyNote.taskText;
+  </script>
 </body>
 </html>

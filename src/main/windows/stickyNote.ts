@@ -1,15 +1,9 @@
-import { app, BrowserWindow } from "electron";
 import path from "path";
+import { createSingletonWindowOpener } from "./singletonWindow";
 
-let stickyNoteWindow: BrowserWindow | null = null;
-
-export function createStickyNoteWindow(): BrowserWindow {
-  if (stickyNoteWindow && !stickyNoteWindow.isDestroyed()) {
-    stickyNoteWindow.show();
-    return stickyNoteWindow;
-  }
-
-  stickyNoteWindow = new BrowserWindow({
+export const createStickyNoteWindow = createSingletonWindowOpener(
+  ["src", "renderer", "sticky-note", "index.html"],
+  {
     width: 280,
     height: 160,
     alwaysOnTop: true,
@@ -20,20 +14,7 @@ export function createStickyNoteWindow(): BrowserWindow {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, "..", "preload", "stickyNote.js"),
     },
-  });
-
-  stickyNoteWindow.loadFile(
-    path.join(app.getAppPath(), "src", "renderer", "sticky-note", "index.html")
-  );
-
-  stickyNoteWindow.on("closed", () => {
-    stickyNoteWindow = null;
-  });
-
-  return stickyNoteWindow;
-}
-
-export function getStickyNoteWindow(): BrowserWindow | null {
-  return stickyNoteWindow;
-}
+  }
+);
