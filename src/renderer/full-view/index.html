@@ -48,6 +48,31 @@
   #task-list li span {
     flex: 1;
   }
+  h2 {
+    font-size: 16px;
+    margin: 32px 0 12px;
+  }
+  #settings-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px;
+  }
+  #settings-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+  }
+  #settings-form input {
+    width: 80px;
+    padding: 6px;
+    font-size: 14px;
+  }
 </style>
 </head>
 <body>
@@ -58,6 +83,23 @@
       <button type="submit">Add Task</button>
     </form>
     <ul id="task-list"></ul>
+
+    <h2>Reminder Settings</h2>
+    <form id="settings-form">
+      <label>
+        Idle threshold (minutes)
+        <input id="idle-threshold-input" type="number" min="1" required />
+      </label>
+      <label>
+        Repeat interval (minutes)
+        <input id="repeat-interval-input" type="number" min="1" required />
+      </label>
+      <label>
+        Default snooze duration (minutes)
+        <input id="default-snooze-input" type="number" min="1" required />
+      </label>
+      <button type="submit">Save Settings</button>
+    </form>
   </div>
   <script src="./app.js"></script>
 </body>

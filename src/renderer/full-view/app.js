@@ -63,3 +63,21 @@ document.getElementById("add-task-form").addEventListener("submit", async (e) =>
 
 window.fullView.getAllTasks().then(render);
 window.fullView.onTasksUpdated(render);
+
+function applySettings(settings) {
+  document.getElementById("idle-threshold-input").value = settings.idleThresholdMinutes;
+  document.getElementById("repeat-interval-input").value = settings.repeatIntervalMinutes;
+  document.getElementById("default-snooze-input").value = settings.defaultSnoozeMinutes;
+}
+
+document.getElementById("settings-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const settings = await window.fullView.updateSettings({
+    idleThresholdMinutes: Number(document.getElementById("idle-threshold-input").value),
+    repeatIntervalMinutes: Number(document.getElementById("repeat-interval-input").value),
+    defaultSnoozeMinutes: Number(document.getElementById("default-snooze-input").value),
+  });
+  applySettings(settings);
+});
+
+window.fullView.getSettings().then(applySettings);

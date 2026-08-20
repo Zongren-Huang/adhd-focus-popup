@@ -11,4 +11,6 @@ contextBridge.exposeInMainWorld("fullView", {
     ipcRenderer.on("tasks:updated", listener);
     return () => ipcRenderer.removeListener("tasks:updated", listener);
   },
+  getSettings: () => ipcRenderer.invoke("settings:get"),
+  updateSettings: (settings: unknown) => ipcRenderer.invoke("settings:update", settings),
 });

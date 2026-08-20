@@ -24,16 +24,42 @@
     font-size: 14px;
     color: #3a3a1f;
   }
+  .actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 12px;
+  }
   button {
     -webkit-app-region: no-drag;
+    margin: 0;
+  }
+  .empty-state button {
     margin: 0 16px 12px;
+  }
+  #mute-button.active {
+    background: #ffb3b3;
+    font-weight: bold;
+  }
+  #snooze-button:disabled {
+    opacity: 0.6;
+  }
+  @keyframes reminder-flash {
+    0%, 100% { background-color: #fff6a8; }
+    50% { background-color: #ff5c5c; }
+  }
+  body.reminder-flash {
+    animation: reminder-flash 0.3s ease-in-out 2;
   }
 </style>
 </head>
 <body>
   <div class="task-view" id="task-view" hidden>
     <div class="task" id="task-text"></div>
-    <button id="mark-done-button">Mark Done</button>
+    <div class="actions">
+      <button id="mark-done-button">Mark Done</button>
+      <button id="snooze-button">Snooze</button>
+      <button id="mute-button">Mute</button>
+    </div>
   </div>
   <div class="empty-state" id="empty-state" hidden>
     <p>No Current Task.</p>

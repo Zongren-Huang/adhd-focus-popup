@@ -1,5 +1,7 @@
 import { app } from "electron";
+import { loadReminderSettings } from "./persistence/settingsStore";
 import { loadTaskListState, saveTaskListState } from "./persistence/taskListStore";
+import { registerReminderIpc } from "./reminder/reminderIpc";
 import { applyDailyReset, toLocalDateString } from "./tasks/dailyReset";
 import { registerTaskListIpc } from "./tasks/taskListIpc";
 import { createTray } from "./tray";
@@ -13,7 +15,13 @@ app.whenReady().then(() => {
   if (reset.didReset) {
     saveTaskListState(userDataDir, { tasks: reset.taskList, lastActiveDate: reset.lastActiveDate });
   }
-  registerTaskListIpc(reset.taskList, userDataDir);
+  const taskListApi = registerTaskListIpc(reset.taskList, userDataDir);
+
+  registerReminderIpc({
+    userDataDir,
+    getTaskList: taskListApi.getTaskList,
+    initialSettings: loadReminderSettings(userDataDir),
+  });
 
   createStickyNoteWindow();
   createTray();

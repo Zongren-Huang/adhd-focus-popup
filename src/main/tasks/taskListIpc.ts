@@ -4,7 +4,10 @@ import { openFullViewWindow } from "../windows/fullView";
 import { toLocalDateString } from "./dailyReset";
 import { addTask, deleteTask, markTaskDone, reorderTasks, type TaskList } from "./taskList";
 
-export function registerTaskListIpc(initialTaskList: TaskList, userDataDir: string): void {
+export function registerTaskListIpc(
+  initialTaskList: TaskList,
+  userDataDir: string
+): { getTaskList: () => TaskList } {
   let taskList: TaskList = initialTaskList;
 
   function broadcast(): void {
@@ -27,4 +30,6 @@ export function registerTaskListIpc(initialTaskList: TaskList, userDataDir: stri
   ipcMain.handle("fullView:open", () => {
     openFullViewWindow();
   });
+
+  return { getTaskList: () => taskList };
 }
