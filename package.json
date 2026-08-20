@@ -24,6 +24,7 @@
     "productName": "ADHD Focus Popup",
     "files": [
       "dist/**/*",
+      "src/renderer/**/*",
       "assets/**/*",
       "package.json"
     ],
