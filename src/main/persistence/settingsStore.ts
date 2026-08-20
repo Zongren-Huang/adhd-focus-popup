@@ -5,13 +5,13 @@ const FILE_NAME = "settings.json";
 
 export interface ReminderSettings {
   idleThresholdMinutes: number;
-  repeatIntervalMinutes: number;
+  reminderDurationMinutes: number;
   defaultSnoozeMinutes: number;
 }
 
 export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   idleThresholdMinutes: 2,
-  repeatIntervalMinutes: 5,
+  reminderDurationMinutes: 5,
   defaultSnoozeMinutes: 10,
 };
 
@@ -31,9 +31,9 @@ export function loadReminderSettings(userDataDir: string): ReminderSettings {
       idleThresholdMinutes: isPositiveNumber(parsed.idleThresholdMinutes)
         ? parsed.idleThresholdMinutes
         : DEFAULT_REMINDER_SETTINGS.idleThresholdMinutes,
-      repeatIntervalMinutes: isPositiveNumber(parsed.repeatIntervalMinutes)
-        ? parsed.repeatIntervalMinutes
-        : DEFAULT_REMINDER_SETTINGS.repeatIntervalMinutes,
+      reminderDurationMinutes: isPositiveNumber(parsed.reminderDurationMinutes)
+        ? parsed.reminderDurationMinutes
+        : DEFAULT_REMINDER_SETTINGS.reminderDurationMinutes,
       defaultSnoozeMinutes: isPositiveNumber(parsed.defaultSnoozeMinutes)
         ? parsed.defaultSnoozeMinutes
         : DEFAULT_REMINDER_SETTINGS.defaultSnoozeMinutes,

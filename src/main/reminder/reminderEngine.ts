@@ -2,11 +2,11 @@ import type { Task } from "../tasks/taskList";
 
 export interface ReminderTimings {
   idleThresholdMs: number;
-  repeatIntervalMs: number;
+  durationMs: number;
 }
 
 export interface ReminderEngineState {
-  lastFiredAt: number | null;
+  firstFiredAt: number | null;
 }
 
 export interface SnoozeState {
@@ -27,27 +27,37 @@ export interface ReminderDecisionInput {
 export interface ReminderDecision {
   fire: boolean;
   nextState: ReminderEngineState;
+  autoMute: boolean;
 }
 
-const NOT_IDLE_STATE: ReminderEngineState = { lastFiredAt: null };
+const NOT_IDLE_STATE: ReminderEngineState = { firstFiredAt: null };
 
 export function decideReminder(input: ReminderDecisionInput): ReminderDecision {
   const { currentTask, idleMs, now, muted, snooze, timings, state } = input;
 
   if (!currentTask) {
-    return { fire: false, nextState: NOT_IDLE_STATE };
+    return { fire: false, nextState: NOT_IDLE_STATE, autoMute: false };
   }
   if (muted) {
-    return { fire: false, nextState: state };
+    return { fire: false, nextState: state, autoMute: false };
   }
   if (snooze !== null && snooze.taskId === currentTask.id && now < snooze.expiresAt) {
-    return { fire: false, nextState: state };
+    return { fire: false, nextState: state, autoMute: false };
   }
   if (idleMs < timings.idleThresholdMs) {
-    return { fire: false, nextState: NOT_IDLE_STATE };
+    return { fire: false, nextState: NOT_IDLE_STATE, autoMute: false };
   }
-  if (state.lastFiredAt === null || now - state.lastFiredAt >= timings.repeatIntervalMs) {
-    return { fire: true, nextState: { lastFiredAt: now } };
+
+  if (state.firstFiredAt === null) {
+    // Idle threshold just crossed: start a new nagging episode.
+    return { fire: true, nextState: { firstFiredAt: now }, autoMute: false };
   }
-  return { fire: false, nextState: state };
+
+  if (now - state.firstFiredAt >= timings.durationMs) {
+    // Nagged for the configured duration with no response: give up and turn off.
+    return { fire: false, nextState: NOT_IDLE_STATE, autoMute: true };
+  }
+
+  // Still within the nagging duration: keep firing every tick.
+  return { fire: true, nextState: state, autoMute: false };
 }

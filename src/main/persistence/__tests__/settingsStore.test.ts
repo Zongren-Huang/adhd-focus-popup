@@ -21,7 +21,7 @@ describe("settingsStore", () => {
 
   it("round-trips saved settings", () => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "settingsstore-"));
-    const settings = { idleThresholdMinutes: 3, repeatIntervalMinutes: 7, defaultSnoozeMinutes: 15 };
+    const settings = { idleThresholdMinutes: 3, reminderDurationMinutes: 7, defaultSnoozeMinutes: 15 };
     saveReminderSettings(dir, settings);
     expect(loadReminderSettings(dir)).toEqual(settings);
   });
@@ -43,12 +43,12 @@ describe("settingsStore", () => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), "settingsstore-"));
     fs.writeFileSync(
       path.join(dir, "settings.json"),
-      JSON.stringify({ version: 1, idleThresholdMinutes: -5, repeatIntervalMinutes: 8 }),
+      JSON.stringify({ version: 1, idleThresholdMinutes: -5, reminderDurationMinutes: 8 }),
       "utf-8"
     );
     expect(loadReminderSettings(dir)).toEqual({
       idleThresholdMinutes: DEFAULT_REMINDER_SETTINGS.idleThresholdMinutes,
-      repeatIntervalMinutes: 8,
+      reminderDurationMinutes: 8,
       defaultSnoozeMinutes: DEFAULT_REMINDER_SETTINGS.defaultSnoozeMinutes,
     });
   });

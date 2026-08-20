@@ -29,7 +29,7 @@ export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
   let settings: ReminderSettings = options.initialSettings;
   let muted = false;
   let snooze: SnoozeState | null = null;
-  let engineState: ReminderEngineState = { lastFiredAt: null };
+  let engineState: ReminderEngineState = { firstFiredAt: null };
 
   function computePublicState(now: number): ReminderPublicState {
     const currentTask = getCurrentTask(getTaskList());
@@ -76,13 +76,16 @@ export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
       snooze,
       timings: {
         idleThresholdMs: settings.idleThresholdMinutes * MINUTE_MS,
-        repeatIntervalMs: settings.repeatIntervalMinutes * MINUTE_MS,
+        durationMs: settings.reminderDurationMinutes * MINUTE_MS,
       },
       state: engineState,
     });
     engineState = decision.nextState;
     if (decision.fire) {
       broadcastFire();
+    }
+    if (decision.autoMute) {
+      muted = true;
     }
     maybeBroadcastState(now);
   }
@@ -112,7 +115,7 @@ export function registerReminderIpc(options: RegisterReminderIpcOptions): void {
   ipcMain.handle("settings:update", (_event, next: Partial<ReminderSettings>) => {
     settings = {
       idleThresholdMinutes: sanitizeMinutes(next?.idleThresholdMinutes, settings.idleThresholdMinutes),
-      repeatIntervalMinutes: sanitizeMinutes(next?.repeatIntervalMinutes, settings.repeatIntervalMinutes),
+      reminderDurationMinutes: sanitizeMinutes(next?.reminderDurationMinutes, settings.reminderDurationMinutes),
       defaultSnoozeMinutes: sanitizeMinutes(next?.defaultSnoozeMinutes, settings.defaultSnoozeMinutes),
     };
     saveReminderSettings(userDataDir, settings);

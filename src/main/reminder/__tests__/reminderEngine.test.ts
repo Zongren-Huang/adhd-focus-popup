@@ -6,8 +6,8 @@ function task(id: string): Task {
   return { id, description: id, status: "pending" };
 }
 
-const timings: ReminderTimings = { idleThresholdMs: 120_000, repeatIntervalMs: 300_000 };
-const freshState: ReminderEngineState = { lastFiredAt: null };
+const timings: ReminderTimings = { idleThresholdMs: 120_000, durationMs: 300_000 };
+const freshState: ReminderEngineState = { firstFiredAt: null };
 
 describe("decideReminder", () => {
   it("does not fire while idle duration is below the threshold", () => {
@@ -20,10 +20,10 @@ describe("decideReminder", () => {
       timings,
       state: freshState,
     });
-    expect(result).toEqual({ fire: false, nextState: { lastFiredAt: null } });
+    expect(result).toEqual({ fire: false, nextState: { firstFiredAt: null }, autoMute: false });
   });
 
-  it("fires the instant idle duration crosses the threshold", () => {
+  it("fires the instant idle duration crosses the threshold, starting a nagging episode", () => {
     const result = decideReminder({
       currentTask: task("A"),
       idleMs: 120_000,
@@ -33,35 +33,38 @@ describe("decideReminder", () => {
       timings,
       state: freshState,
     });
-    expect(result).toEqual({ fire: true, nextState: { lastFiredAt: 1_000_000 } });
+    expect(result).toEqual({ fire: true, nextState: { firstFiredAt: 1_000_000 }, autoMute: false });
   });
 
-  it("does not re-fire before the repeat interval elapses, then re-fires once it does", () => {
-    const afterFirstFire: ReminderEngineState = { lastFiredAt: 1_000_000 };
-    const tooSoon = decideReminder({
+  it("keeps firing on every subsequent tick while still within the reminder duration", () => {
+    const midEpisode: ReminderEngineState = { firstFiredAt: 1_000_000 };
+    const result = decideReminder({
       currentTask: task("A"),
       idleMs: 200_000,
-      now: 1_000_000 + 299_999,
+      now: 1_000_000 + 200_000, // well within the 300_000ms duration
       muted: false,
       snooze: null,
       timings,
-      state: afterFirstFire,
+      state: midEpisode,
     });
-    expect(tooSoon).toEqual({ fire: false, nextState: afterFirstFire });
+    expect(result).toEqual({ fire: true, nextState: midEpisode, autoMute: false });
+  });
 
-    const dueAgain = decideReminder({
+  it("stops firing and signals auto-mute once the reminder duration elapses with no response", () => {
+    const midEpisode: ReminderEngineState = { firstFiredAt: 1_000_000 };
+    const result = decideReminder({
       currentTask: task("A"),
-      idleMs: 200_000,
-      now: 1_000_000 + 300_000,
+      idleMs: 400_000,
+      now: 1_000_000 + 300_000, // exactly at the duration boundary
       muted: false,
       snooze: null,
       timings,
-      state: afterFirstFire,
+      state: midEpisode,
     });
-    expect(dueAgain).toEqual({ fire: true, nextState: { lastFiredAt: 1_300_000 } });
+    expect(result).toEqual({ fire: false, nextState: { firstFiredAt: null }, autoMute: true });
   });
 
-  it("resets the fire streak once idle duration drops back below threshold", () => {
+  it("resets the episode once idle duration drops back below threshold", () => {
     const result = decideReminder({
       currentTask: task("A"),
       idleMs: 0,
@@ -69,12 +72,12 @@ describe("decideReminder", () => {
       muted: false,
       snooze: null,
       timings,
-      state: { lastFiredAt: 1_000_000 },
+      state: { firstFiredAt: 1_000_000 },
     });
-    expect(result).toEqual({ fire: false, nextState: { lastFiredAt: null } });
+    expect(result).toEqual({ fire: false, nextState: { firstFiredAt: null }, autoMute: false });
   });
 
-  it("fires again immediately on the next idle streak after an active gap", () => {
+  it("starts a fresh episode on the next idle streak after an active gap", () => {
     const result = decideReminder({
       currentTask: task("A"),
       idleMs: 120_000,
@@ -82,9 +85,9 @@ describe("decideReminder", () => {
       muted: false,
       snooze: null,
       timings,
-      state: { lastFiredAt: null },
+      state: { firstFiredAt: null },
     });
-    expect(result.fire).toBe(true);
+    expect(result).toEqual({ fire: true, nextState: { firstFiredAt: 2_000_000 }, autoMute: false });
   });
 
   it("suppresses firing while the Current Task is Snoozed, resuming once it expires", () => {
@@ -98,7 +101,7 @@ describe("decideReminder", () => {
       timings,
       state: freshState,
     });
-    expect(whileSnoozed).toEqual({ fire: false, nextState: freshState });
+    expect(whileSnoozed).toEqual({ fire: false, nextState: freshState, autoMute: false });
 
     const afterExpiry = decideReminder({
       currentTask: task("A"),
@@ -136,7 +139,7 @@ describe("decideReminder", () => {
       timings,
       state: freshState,
     });
-    expect(result).toEqual({ fire: false, nextState: freshState });
+    expect(result).toEqual({ fire: false, nextState: freshState, autoMute: false });
   });
 
   it("does not crash and does not fire when Muted with no Current Task", () => {
@@ -149,7 +152,7 @@ describe("decideReminder", () => {
       timings,
       state: freshState,
     });
-    expect(result).toEqual({ fire: false, nextState: { lastFiredAt: null } });
+    expect(result).toEqual({ fire: false, nextState: { firstFiredAt: null }, autoMute: false });
   });
 
   it("never fires for an empty Task List (no Current Task)", () => {
@@ -162,6 +165,6 @@ describe("decideReminder", () => {
       timings,
       state: freshState,
     });
-    expect(result).toEqual({ fire: false, nextState: { lastFiredAt: null } });
+    expect(result).toEqual({ fire: false, nextState: { firstFiredAt: null }, autoMute: false });
   });
 });
