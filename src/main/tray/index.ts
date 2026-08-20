@@ -16,7 +16,7 @@ export function createTray(): Tray {
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
-        label: "Open Full View",
+        label: "Open Settings",
         click: () => openFullViewWindow(),
       },
       {

@@ -5,7 +5,7 @@ export const createStickyNoteWindow = createSingletonWindowOpener(
   ["src", "renderer", "sticky-note", "index.html"],
   {
     width: 280,
-    height: 160,
+    height: 220,
     alwaysOnTop: true,
     frame: false,
     resizable: false,

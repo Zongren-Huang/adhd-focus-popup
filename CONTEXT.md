@@ -49,8 +49,8 @@ The small, always-on-top window that's visible at all times. Shows only the Curr
 _Avoid_: Popup, small window
 
 **Full View**:
-The separate window, opened from the tray icon, where the user manages the whole Task List — adding, reordering, deleting — and creates or edits Voice Profiles. Not always visible.
-_Avoid_: Dashboard, settings, main window
+The separate window, opened from the tray icon, where the user manages the whole Task List — adding, reordering, deleting — and creates or edits Voice Profiles. Not always visible. Displayed to the user as "Settings" (window title, tray menu label) as of 2026-08-20 — this reverses the original "_Avoid_: settings" guidance below, kept here as the internal/code term.
+_Avoid_ (internal code/comments only, no longer the on-screen label): Dashboard, main window
 
 **Nag Clip**:
 The one required audio clip in a Voice Profile — played for every Reminder.

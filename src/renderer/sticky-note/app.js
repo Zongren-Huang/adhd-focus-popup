@@ -4,14 +4,40 @@ let lastReminderState = { muted: false, snoozedTaskId: null };
 let flashTimeoutId = null;
 
 function render(tasks) {
-  const current = tasks.find((task) => task.status === "pending") ?? null;
+  const currentIndex = tasks.findIndex((task) => task.status === "pending");
+  const current = currentIndex === -1 ? null : tasks[currentIndex];
   currentTaskId = current ? current.id : null;
 
   document.getElementById("task-view").hidden = !current;
   document.getElementById("empty-state").hidden = !!current;
+
+  const previousEl = document.getElementById("previous-task");
+  const upcomingEl = document.getElementById("upcoming-task");
+
   if (current) {
     document.getElementById("task-text").textContent = current.description;
+
+    // Every task before the Current Task is necessarily Done (otherwise one of
+    // them would be Current instead), so this is always the most recently
+    // completed task, if any.
+    const previous = currentIndex > 0 ? tasks[currentIndex - 1] : null;
+    previousEl.hidden = !previous;
+    if (previous) {
+      previousEl.textContent = previous.description;
+    }
+
+    const upcoming = tasks.slice(currentIndex + 1).find((task) => task.status === "pending") ?? null;
+    upcomingEl.hidden = !upcoming;
+    if (upcoming) {
+      upcomingEl.textContent = upcoming.description;
+    }
+  } else {
+    previousEl.hidden = true;
+    upcomingEl.hidden = true;
+    document.getElementById("empty-state-message").textContent =
+      tasks.length > 0 ? "You've done everything, add more tasks!" : "No Current Task.";
   }
+
   applyReminderState(lastReminderState);
 }
 
