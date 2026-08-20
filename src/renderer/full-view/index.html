@@ -132,12 +132,14 @@
   }
   .ack-clip-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     font-size: 13px;
   }
   .ack-clip-row audio {
-    max-width: 160px;
+    width: 180px;
+    flex-shrink: 0;
   }
 </style>
 </head>
