@@ -19,9 +19,8 @@ function applyReminderState(state) {
   lastReminderState = state;
   muted = state.muted;
 
-  const muteButton = document.getElementById("mute-button");
-  muteButton.textContent = muted ? "Unmute" : "Mute";
-  muteButton.classList.toggle("active", muted);
+  document.getElementById("reminder-toggle").checked = !muted;
+  document.getElementById("reminder-off-status").hidden = !muted;
 
   const isSnoozed = state.snoozedTaskId !== null && state.snoozedTaskId === currentTaskId;
   const snoozeButton = document.getElementById("snooze-button");
@@ -52,8 +51,8 @@ document.getElementById("snooze-button").addEventListener("click", async () => {
   applyReminderState(await window.stickyNote.snooze());
 });
 
-document.getElementById("mute-button").addEventListener("click", async () => {
-  applyReminderState(await window.stickyNote.setMuted(!muted));
+document.getElementById("reminder-toggle").addEventListener("change", async (e) => {
+  applyReminderState(await window.stickyNote.setMuted(!e.target.checked));
 });
 
 window.stickyNote.getAllTasks().then(render);
