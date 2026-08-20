@@ -259,34 +259,49 @@ async function saveAckClip(setter, profileId, blob, extension) {
 }
 
 function buildAckClipRow(profileId, label, helpText, existingUrl, setter) {
-  const row = document.createElement("div");
-  row.className = "ack-clip-row";
+  const section = document.createElement("div");
+  section.className = "ack-clip-section";
 
+  const header = document.createElement("div");
+  header.className = "ack-clip-header";
   const labelSpan = document.createElement("span");
   labelSpan.textContent = label;
-  row.appendChild(labelSpan);
-  row.appendChild(helpIcon(helpText));
+  header.appendChild(labelSpan);
+  header.appendChild(helpIcon(helpText));
+  section.appendChild(header);
 
+  const body = document.createElement("div");
+  body.className = "ack-clip-body";
+
+  const player = document.createElement("div");
+  player.className = "ack-clip-player";
   if (existingUrl) {
     const audio = document.createElement("audio");
     audio.controls = true;
     audio.src = existingUrl;
-    row.appendChild(audio);
+    player.appendChild(audio);
   } else {
     const noneSpan = document.createElement("span");
+    noneSpan.className = "no-clip-text";
     noneSpan.textContent = "No clip set";
-    row.appendChild(noneSpan);
+    player.appendChild(noneSpan);
   }
+  body.appendChild(player);
 
   const onCaptured = (blob, extension) => saveAckClip(setter, profileId, blob, extension);
 
+  const actions = document.createElement("div");
+  actions.className = "ack-clip-actions";
+
   const rowRecordButton = document.createElement("button");
   rowRecordButton.type = "button";
+  rowRecordButton.className = "record-toggle-button";
   rowRecordButton.textContent = existingUrl ? "Record Again" : "Start Recording";
   rowRecordButton.dataset.idleLabel = rowRecordButton.textContent;
   const status = document.createElement("span");
+  status.className = "record-status";
   rowRecordButton.addEventListener("click", () => toggleRecording(rowRecordButton, status, onCaptured));
-  row.appendChild(rowRecordButton);
+  actions.appendChild(rowRecordButton);
 
   const rowFileInput = document.createElement("input");
   rowFileInput.type = "file";
@@ -299,10 +314,13 @@ function buildAckClipRow(profileId, label, helpText, existingUrl, setter) {
     const match = /\.([a-zA-Z0-9]+)$/.exec(file.name);
     onCaptured(file, match ? match[1] : "bin");
   });
-  row.appendChild(rowFileInput);
-  row.appendChild(status);
+  actions.appendChild(rowFileInput);
+  actions.appendChild(status);
 
-  return row;
+  body.appendChild(actions);
+  section.appendChild(body);
+
+  return section;
 }
 
 function renderVoiceProfileList() {
